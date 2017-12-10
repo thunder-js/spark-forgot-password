@@ -10,7 +10,7 @@ functions:
       code:
         src: src/forgot-password-request.ts
         environment:
-          SENDGRID_API_KEY: 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
+          SENDGRID_API_KEY: token
   randomNumber:
     type: resolver
     schema: src/random-number.graphql
