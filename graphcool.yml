@@ -1,0 +1,10 @@
+# GraphQL types
+types: ./types.graphql
+
+# functions
+functions:
+  random-number:
+    type: resolver
+    schema: src/random-number.graphql
+    handler:
+      code: src/random-number.ts
