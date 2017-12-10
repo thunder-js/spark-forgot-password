@@ -1,4 +1,4 @@
-import { forgotPassword } from './forgot-password'
+import { forgotPassword } from '../src/forgot-password'
 
 describe('forgotPassword', () => {
   it('can update user password and clear forgotPasswordToken, if it is correct', async () => {

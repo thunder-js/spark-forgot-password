@@ -1,5 +1,5 @@
 /*  global describe test */
-import {forgotPasswordRequest} from './forgot-password-request'
+import {forgotPasswordRequest} from '../src/forgot-password-request'
 
 
 describe('forgotPasswordRequest', () => {

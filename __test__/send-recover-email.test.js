@@ -1,5 +1,5 @@
 /*  global describe test */
-import {getLink, getHtml} from './send-recover-email'
+import {getLink, getHtml} from '../src/send-recover-email'
 
 
 describe('getLink', () => {
