@@ -1,4 +1,3 @@
-
 export default (event) => {
   const min = event.data.min
   const max = event.data.max

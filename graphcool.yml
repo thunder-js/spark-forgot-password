@@ -3,6 +3,11 @@ types: ./types.graphql
 
 # functions
 functions:
+  forgotPasswordRequest:
+    type: resolver
+    schema: src/forgot-password-request.graphql
+    handler:
+      code: src/forgot-password-request.ts
   randomNumber:
     type: resolver
     schema: src/random-number.graphql
