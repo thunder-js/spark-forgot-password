@@ -18,7 +18,7 @@ export interface IEventData {
 }
 
 const updateUserForgotPasswordTokenMutation = `
-  mutation updateUserForgotPasswordToken($id: ID!, forgotPasswordToken: String!) {
+  mutation updateUserForgotPasswordToken($id: ID!, $forgotPasswordToken: String) {
     updateUser(
       id: $id,
       forgotPasswordToken:$forgotPasswordToken
@@ -27,15 +27,15 @@ const updateUserForgotPasswordTokenMutation = `
     }
   }
 `
-const updateUserForgotPasswordToken = async (api: GraphQLClient, id: string, forgotPasswordToken: string) => {
-  const response = await api.request<{ updateUser: IUser}>(updateUserForgotPasswordTokenMutation, {
+export const updateUserForgotPasswordToken = async (graphQLClient: GraphQLClient, id: string, forgotPasswordToken: string): Promise<IUser> => {
+  const response = await graphQLClient.request<{ updateUser: IUser}>(updateUserForgotPasswordTokenMutation, {
     id,
     forgotPasswordToken,
   })
   return response.updateUser
 }
 
-async function getUser(api: GraphQLClient, email: string): Promise<IUser> {
+async function getUser(graphQLClient: GraphQLClient, email: string): Promise<IUser> {
   const query = `
     query getUser($email: String!) {
       User(email: $email) {
@@ -44,7 +44,7 @@ async function getUser(api: GraphQLClient, email: string): Promise<IUser> {
       }
     }
   `
-  const response = await api.request<IGetUserResponse>(query, {
+  const response = await graphQLClient.request<IGetUserResponse>(query, {
     email,
   })
 

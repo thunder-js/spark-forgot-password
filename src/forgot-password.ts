@@ -1,8 +1,9 @@
 import { fromEvent, FunctionEvent } from 'graphcool-lib'
 import { GraphQLClient } from 'graphql-request'
-const bcrypt = require('bcrypt')
+import * as bcrypt from 'bcryptjs'
+import { updateUserForgotPasswordToken } from './forgot-password-request'
 
-const saltRounds = 10
+const SALT_ROUNDS = 10
 
 export interface IEventData {
   token: string
@@ -25,20 +26,16 @@ export interface IMutationErrorResponse {
     message: string,
   }
 }
-
-interface IUpdateUserResponse {
-  updateUser: IUser
-}
-
 export interface IAPI {
   getUserByForgotPasswordToken: (token: string) => Promise<IUser | null>
   updateUserPassword: (userId: string, newPassword: string) => Promise<IUser>
+  updateUserForgotPasswordToken: (id: string, forgotPasswordToken: string) => Promise<IUser>
 }
 
 type MutationResponse = IMutationSuccessResponse | IMutationErrorResponse
 
 export const updateUserPasswordQuery = `
-mutation updateUserPassword($id: ID!, $password: string!) {
+mutation updateUserPassword($id: ID!, $password: String!) {
   updateUser(
     id: $id,
     password:$password
@@ -47,10 +44,8 @@ mutation updateUserPassword($id: ID!, $password: string!) {
   }
 }`
 
-export const hashPassword = async (password: string): string => bcrypt.hash(password, saltRounds)
-
 const updateUserPassword = async (graphQLClient: GraphQLClient, userId: string, hashedPassword: string): Promise<IUser> => {
-  const response = await graphQLClient.request<IUpdateUserResponse>(updateUserPasswordQuery, {
+  const response = await graphQLClient.request<{updateUser: IUser}>(updateUserPasswordQuery, {
     id: userId,
     password: hashedPassword,
   })
@@ -58,18 +53,20 @@ const updateUserPassword = async (graphQLClient: GraphQLClient, userId: string, 
 };
 
 export const getUserByForgotPasswordTokenQuery = `
-query getUserByForgotPasswordToken($token: string!){
-  User(forgotPasswordToken: $token) {
-    id
+  query getUserByForgotPasswordToken($token: String!){
+    User(forgotPasswordToken: $token) {
+      id
+    }
   }
-}`
-
+`
 const getUserByForgotPasswordToken = async (graphQLClient: GraphQLClient, token: string): Promise<IUser | null> => {
-  const response = await graphQLClient.request<{User: IUser}>(getUserByForgotPasswordTokenQuery)
+  const response = await graphQLClient.request<{User: IUser}>(getUserByForgotPasswordTokenQuery, {
+    token
+  })
   return response.User
 }
 
-//  Main function
+// //  Main function
 export const forgotPassword = async (api: IAPI, token: string, newPassword: string): Promise<MutationResponse> => {
   const user = await api.getUserByForgotPasswordToken(token)
   if (!user) {
@@ -81,9 +78,12 @@ export const forgotPassword = async (api: IAPI, token: string, newPassword: stri
     }
   }
 
-  const hasedPassword = await hashPassword(newPassword)
-  const updateResponse = await api.updateUserPassword(user.id, hasedPassword)
-  console.log(updateResponse)
+  const salt = bcrypt.genSaltSync(SALT_ROUNDS)
+  const hash = await bcrypt.hash(newPassword, SALT_ROUNDS)
+
+  const updateResponse = await api.updateUserPassword(user.id, hash)
+  await api.updateUserForgotPasswordToken(user.id, null)
+
   return {
     data: {
       success: true,
@@ -95,26 +95,26 @@ export const forgotPassword = async (api: IAPI, token: string, newPassword: stri
 const getApi = (graphQLClient: GraphQLClient): IAPI => ({
   getUserByForgotPasswordToken: (token: string) => getUserByForgotPasswordToken(graphQLClient, token),
   updateUserPassword: (userId: string, newPassword: string) => updateUserPassword(graphQLClient, userId, newPassword),
+  updateUserForgotPasswordToken: (id: string, forgotPasswordToken: string) => updateUserForgotPasswordToken(graphQLClient, id, forgotPasswordToken)
 })
 
 //  Event handler
-export default async (event: FunctionEvent<IEventData>): Promise<MutationResponse> => {
+export default async (event) => {
   const {
     token,
     newPassword,
   } = event.data
 
-  const graphcool = fromEvent(event)
-  const graphQLClient = graphcool.api('simple/v1')
-  const api = getApi(graphQLClient)
-
   try {
+    const graphcool = fromEvent(event)
+    const graphQLClient = graphcool.api('simple/v1')
+    const api = getApi(graphQLClient)
     return forgotPassword(api, token, newPassword)
   } catch (e) {
     console.log(e)
     return {
       error: {
-        code: 0,
+        code: 10,
         message: 'An unexpected error occured during reset password.',
         userFacingMessage: `${e.toString()}`,
       },
