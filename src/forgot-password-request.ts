@@ -3,20 +3,20 @@ import sendRecoverEmail from './send-recover-email'
 import { GraphQLClient } from 'graphql-request'
 const uuidv4 = require('uuid/v4');
 
-export interface User {
+export interface IUser {
   id: string
   name: string
 }
 
-export interface GetUserResponse {
-  User: User
+export interface IGetUserResponse {
+  User: IUser
 }
 
-export interface EventData {
+export interface IEventData {
   email: string
 }
 
-async function getUser(api: GraphQLClient, email: string): Promise<GetUserResponse> {
+async function getUser(api: GraphQLClient, email: string): Promise<IGetUserResponse> {
   const query = `
     query getUser($email: String!) {
       User(email: $email) {
@@ -30,64 +30,56 @@ async function getUser(api: GraphQLClient, email: string): Promise<GetUserRespon
     email,
   }
 
-  return api.request<GetUserResponse>(query, variables)
+  return api.request<IGetUserResponse>(query, variables)
 }
 
-export interface Dependencies {
+export interface IDependencies {
   api: GraphQLClient;
   sendRecoverEmail: (name: string, to: string, token: string) => Promise<any>;
   generateToken: () => string
 }
-export const forgotPasswordRequest = async (deps: Dependencies, email: string) => {
-  const {
-    api,
-    sendRecoverEmail,
-    generateToken
-  } = deps
-
-  const response = await getUser(api, email)
+export const forgotPasswordRequest = async (deps: IDependencies, email: string) => {
+  const response = await getUser(deps.api, email)
   const userExists = response.User !== null
   if (!userExists) {
     return {
       data: {
         email,
-        success: false
-      }
+        success: false,
+      },
     }
   }
 
   const {
-    name
+    name,
   } = response.User
-  
-  const token = generateToken();
 
-  await sendRecoverEmail(name, email, token)
+  const token = deps.generateToken();
+
+  await deps.sendRecoverEmail(name, email, token)
 
   return {
     data: {
       email: 'rafael.correia.poli@gmail.com',
-      success: true
-    }
+      success: true,
+    },
   }
 }
 
-
-export default async (event: FunctionEvent<EventData>) => {
+export default async (event: FunctionEvent<IEventData>) => {
   const graphcool = fromEvent(event)
   const api = graphcool.api('simple/v1')
   const generateToken = uuidv4
   try {
     return forgotPasswordRequest({ api, sendRecoverEmail, generateToken }, event.data.email)
-  }
-  catch (e) {
+  } catch (e) {
     console.log(e)
     return {
       error: {
         code: 0,
         message: 'An unexpected error occured during authentication.',
-        userFacingMessage: `${e.toString()}`
-      }
+        userFacingMessage: `${e.toString()}`,
+      },
     }
   }
 }

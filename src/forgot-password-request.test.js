@@ -25,6 +25,12 @@ describe('forgotPasswordRequest', () => {
     expect(mockSendRecoverEmail.mock.calls[0][0]).toBe('Belial lord of Darkness')
     expect(mockSendRecoverEmail.mock.calls[0][1]).toBe('rafael.correia.poli@gmail.com')
     expect(mockSendRecoverEmail.mock.calls[0][2]).toBe('my-token')
-    console.log(response)
+
+    expect(response).toEqual({
+      data: {
+        email: 'rafael.correia.poli@gmail.com',
+        success: true
+      }
+    })
   })
 })
