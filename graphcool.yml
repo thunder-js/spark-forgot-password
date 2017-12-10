@@ -3,7 +3,7 @@ types: ./types.graphql
 
 # functions
 functions:
-  random-number:
+  randomNumber:
     type: resolver
     schema: src/random-number.graphql
     handler:
