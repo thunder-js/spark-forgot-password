@@ -19,8 +19,8 @@ const getHtml = (name: string, token: string) => {
   `
 }
   
-export default (name: string, to: string, token: string) => {
-  sgMail.send({
+export default (name: string, to: string, token: string): Promise<any> => {
+  return sgMail.send({
     to,
     from: FROM_EMAIL,
     subject: SUBJECT,

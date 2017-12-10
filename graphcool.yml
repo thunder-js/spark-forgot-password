@@ -7,7 +7,10 @@ functions:
     type: resolver
     schema: src/forgot-password-request.graphql
     handler:
-      code: src/forgot-password-request.ts
+      code:
+        src: src/forgot-password-request.ts
+        environment:
+          SENDGRID_API_KEY: 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
   randomNumber:
     type: resolver
     schema: src/random-number.graphql
