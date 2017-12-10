@@ -1,0 +1,7 @@
+type RandomNumberPayload {
+  number: Float!
+}
+
+extend type Mutation {
+  randomNumber(min: Int!, max: Int!): RandomNumberPayload
+}
