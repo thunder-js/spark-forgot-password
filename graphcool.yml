@@ -11,8 +11,9 @@ functions:
         src: src/forgot-password-request.ts
         environment:
           SENDGRID_API_KEY: token
-  randomNumber:
+  forgotPassword:
     type: resolver
-    schema: src/random-number.graphql
+    schea: src/forgot-password.graphql
     handler:
-      code: src/random-number.ts
+      code:
+        src: src/forgot-password.ts
