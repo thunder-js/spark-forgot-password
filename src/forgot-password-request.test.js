@@ -3,7 +3,7 @@ import {forgotPasswordRequest} from './forgot-password-request'
 
 
 describe('forgotPasswordRequest', () => {
-  test.only('works', async () => {
+  test('can generate a token, send to user email and update user forgotPasswordToken', async () => {
     const getUser = jest.fn(async () => ({
       id: 'belial-id',
       name: 'Belial lord of Darkness'

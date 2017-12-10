@@ -3,13 +3,13 @@ import {getLink, getHtml} from './send-recover-email'
 
 
 describe('getLink', () => {
-  test.only('works', async () => {
+  test('correctly generates a link for a given token', async () => {
     expect(getLink('my-token-1234')).toBe('https://app.savebob.com.br/forgot-password?token=my-token-1234')
   })
 })
 
 describe('getHtml', () => {
-  test.only('works', async () => {
+  test('correctly generates html for a given name and token', async () => {
     expect(getHtml('Belial Lord of Darkness', 'my-token-1234')).toEqual(`
     Olá Belial Lord of Darkness! <br>
     Para recuperar sua senha, acesse este link: <br>
