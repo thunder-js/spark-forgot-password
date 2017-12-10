@@ -1,0 +1,6 @@
+type User @model {
+  # Required system field:
+  id: ID! @isUnique # read-only (managed by Graphcool)
+
+  forgotPasswordToken: String! @isUnique
+}
