@@ -16,7 +16,7 @@ interface IUser {
 export interface IMutationSuccessResponse {
   data: {
     success: boolean
-    user: IUser,
+    userId: string,
   }
 }
 export interface IMutationErrorResponse {
@@ -83,10 +83,11 @@ export const forgotPassword = async (api: IAPI, token: string, newPassword: stri
 
   const hasedPassword = await hashPassword(newPassword)
   const updateResponse = await api.updateUserPassword(user.id, hasedPassword)
+  console.log(updateResponse)
   return {
     data: {
       success: true,
-      user,
+      userId: user.id,
     },
   }
 }
@@ -110,6 +111,7 @@ export default async (event: FunctionEvent<IEventData>): Promise<MutationRespons
   try {
     return forgotPassword(api, token, newPassword)
   } catch (e) {
+    console.log(e)
     return {
       error: {
         code: 0,

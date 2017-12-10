@@ -30,9 +30,7 @@ describe('forgotPassword', () => {
     expect(response).toEqual({
       data: {
         success: true,
-        user: {
-          id: userId
-        }
+        userId
       }
     })
   })

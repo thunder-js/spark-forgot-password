@@ -1,6 +1,7 @@
 import { fromEvent, FunctionEvent } from 'graphcool-lib'
 import sendRecoverEmail from './send-recover-email'
 import { GraphQLClient } from 'graphql-request'
+import { updateUserPasswordQuery } from './forgot-password'
 const uuidv4 = require('uuid/v4');
 
 export interface IUser {
@@ -16,7 +17,25 @@ export interface IEventData {
   email: string
 }
 
-async function getUser(api: GraphQLClient, email: string): Promise<IGetUserResponse> {
+const updateUserForgotPasswordTokenMutation = `
+  mutation updateUserForgotPasswordToken($id: ID!, forgotPasswordToken: String!) {
+    updateUser(
+      id: $id,
+      forgotPasswordToken:$forgotPasswordToken
+    ){
+      id
+    }
+  }
+`
+const updateUserForgotPasswordToken = async (api: GraphQLClient, id: string, forgotPasswordToken: string) => {
+  const response = await api.request<{ updateUser: IUser}>(updateUserForgotPasswordTokenMutation, {
+    id,
+    forgotPasswordToken,
+  })
+  return response.updateUser
+}
+
+async function getUser(api: GraphQLClient, email: string): Promise<IUser> {
   const query = `
     query getUser($email: String!) {
       User(email: $email) {
@@ -25,22 +44,27 @@ async function getUser(api: GraphQLClient, email: string): Promise<IGetUserRespo
       }
     }
   `
-
-  const variables = {
+  const response = await api.request<IGetUserResponse>(query, {
     email,
-  }
+  })
 
-  return api.request<IGetUserResponse>(query, variables)
+  return response.User
+}
+
+export interface IAPI {
+  updateUserForgotPasswordToken: (id: string, token: string) => Promise<IUser>
+  getUser: (email: string) => Promise<IUser>
 }
 
 export interface IDependencies {
-  api: GraphQLClient;
+  api: IAPI;
   sendRecoverEmail: (name: string, to: string, token: string) => Promise<any>;
   generateToken: () => string
 }
+
 export const forgotPasswordRequest = async (deps: IDependencies, email: string) => {
-  const response = await getUser(deps.api, email)
-  const userExists = response.User !== null
+  const user = await deps.api.getUser(email)
+  const userExists = user !== null
   if (!userExists) {
     return {
       data: {
@@ -52,11 +76,13 @@ export const forgotPasswordRequest = async (deps: IDependencies, email: string) 
 
   const {
     name,
-  } = response.User
+    id,
+  } = user
 
   const token = deps.generateToken();
 
   await deps.sendRecoverEmail(name, email, token)
+  await deps.api.updateUserForgotPasswordToken(id, token)
 
   return {
     data: {
@@ -66,10 +92,17 @@ export const forgotPasswordRequest = async (deps: IDependencies, email: string) 
   }
 }
 
+const getApi = (graphQLClient: GraphQLClient): IAPI => ({
+  updateUserForgotPasswordToken: (id: string, forgotPasswordToken: string) => updateUserForgotPasswordToken(graphQLClient, id, forgotPasswordToken),
+  getUser: (email: string) => getUser(graphQLClient, email),
+})
+
 export default async (event: FunctionEvent<IEventData>) => {
   const graphcool = fromEvent(event)
-  const api = graphcool.api('simple/v1')
+  const graphQLClient = graphcool.api('simple/v1')
+  const api = getApi(graphQLClient)
   const generateToken = uuidv4
+
   try {
     return forgotPasswordRequest({ api, sendRecoverEmail, generateToken }, event.data.email)
   } catch (e) {
