@@ -13,7 +13,7 @@ functions:
           SENDGRID_API_KEY: token
   forgotPassword:
     type: resolver
-    schea: src/forgot-password.graphql
+    schema: src/forgot-password.graphql
     handler:
       code:
         src: src/forgot-password.ts
