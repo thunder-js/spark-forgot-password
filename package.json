@@ -2,5 +2,12 @@
   "name": "forgot-password",
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "graphcool-lib": "^0.1.4",
+    "graphql-request": "^1.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^8.0.57"
+  }
 }
